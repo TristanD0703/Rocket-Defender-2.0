@@ -21,7 +21,7 @@ public class Enemy {
         switch(type){
             case 1:
                 enemyName = "Alien foot-soldier";
-                health = 15;
+                health = 10;
                 strength = 5;
                 pointDrops = 1;
                 evasiveness = 5;
@@ -30,7 +30,7 @@ public class Enemy {
                 enemyName = "Alien Lieutenant";
                 health = 40;
                 strength = 15;
-                pointDrops = 2;
+                pointDrops = 3;
                 evasiveness = 15;
                 break;
             case 3:
@@ -40,7 +40,15 @@ public class Enemy {
                 pointDrops = 5;
                 evasiveness = 20;
                 break;
+            case 4:
+                enemyName = "Scorpion";
+                health = 20;
+                strength = 20;
+                pointDrops = 2;
+                evasiveness = 10;
+                break;
         }
+
     }
     public int getType(){
         return enemyType;
@@ -78,10 +86,10 @@ public class Enemy {
     public void hurt(int currentDamage){
         if(!(evasiveness > Main.rand.nextInt(0,100))){
             health -= currentDamage;
+            System.out.println("You dealt " + currentDamage + " damage!\n");
         } else {
-            System.out.println("The enemy avoided your attack!");
+            System.out.println("The enemy avoided your attack!\n");
         }
-        System.out.println("You dealt " + currentDamage + " damage!\n");
 
         alive = health > 0;
     }

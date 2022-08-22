@@ -10,12 +10,13 @@ public class Main{
     public static int currentWaveNum = 1;
     public static boolean playing = true;
     public static int playerHealth = 100;
+    public static int maxHealth = 100;
     public static int numDefenseUpgrades = 0;
-    public static int lives = 1;
     public static int currentDamage = 5;
     public static int upgradePoints = 0;
-    public static int cannonLevel = 0;
-    public static int weaponAmmo = 5;
+    public static boolean cannonUnlocked = false;
+    public static int weaponAmmo;
+    public static int ammoCapacity = 3;
     public static boolean slow = true;
 
     public static void main(String[] args){
@@ -40,8 +41,7 @@ public class Main{
                 break;
             }
             currentWaveNum++;
-            printSlow("Nice job! You made it to wave " + currentWaveNum + "! 1 bonus upgrade point acquired.");
-            upgradePoints++;
+            printSlow("Nice job! You made it to wave " + currentWaveNum + "!");
 
             printSlow("Keep playing?\n1. yes\n2. no");
             int continuePlaying;
@@ -58,7 +58,11 @@ public class Main{
     public static void generateWave(){
         int enemyCount = rand.nextInt(5,10);
         for(int i = 0; i < enemyCount; i++){
-            enemyList.add(new Enemy(1));
+            if(rand.nextInt(1,5) > 1){
+                enemyList.add(new Enemy(1));
+            } else {
+                enemyList.add(new Enemy(4));
+            }
         }
         if(currentWaveNum % 5 == 0){
             enemyList.add(new Enemy(2));
@@ -70,28 +74,25 @@ public class Main{
     
     //prompts the user to use their upgrade points on various upgrade paths. 
     public static void upgrade(){
-        printSlow("Current amount of upgrade points: " + upgradePoints);
         printSlow("Number of enemies to defeat: " + enemyList.size() + "\n");
 
         boolean repeat = upgradePoints > 0;
         while(repeat){
-            boolean cannonUnlocked = cannonLevel > 0;
+            printSlow("Current amount of upgrade points: " + upgradePoints);
             printSlow("Please choose an upgrade to perform:");
             printSlow("1. Damage upgrade: " + currentDamage);
             printSlow("2. Defense upgrade: " + numDefenseUpgrades);
-            printSlow("3. Life upgrade: " + lives);
-            printSlow("4. Restore 25 health.");
+            printSlow("3. increase max health by 25.");
+            printSlow("4. Upgrade ammo capacity (10 is the maximum upgrade): " + ammoCapacity);
+            printSlow("5. save points");
             if(!cannonUnlocked){
-                printSlow("5. Unlock laser cannon (10 points)");
-            } else{
-                printSlow("5. Upgrade laser cannon: " + cannonLevel);
+                printSlow("6. Unlock laser cannon (10 points)");
             }
-            printSlow("6. save points");
             int user = input.nextInt();
             
             //Feature that allows the user to upgrade an option multiple times. This logic determines whether to ask for multiple point upgrades or not.
             int upgradeAmount = 0; 
-            if(user < 5 || cannonUnlocked){
+            if(user < 5){
                 upgradeAmount = askUpgrade();
             }
             
@@ -103,28 +104,39 @@ public class Main{
                 case 2:
                     numDefenseUpgrades += upgradeAmount; 
                     break;
-                case 3:
-                    lives += upgradeAmount; 
+                case 3: 
+                    maxHealth += upgradeAmount * 25;
+                case 4:
+                    int previousAmmoCapacity = ammoCapacity;
+                    if((upgradeAmount + ammoCapacity) > 10){
+                        ammoCapacity = 10;
+                        upgradeAmount = ammoCapacity - previousAmmoCapacity;
+                        System.out.println("Upgraded ammo to the max (10)");
+                    } else {
+                        ammoCapacity += upgradeAmount;
+                    }
+                case 5: 
                     break;
-                case 4: 
-                    playerHealth += upgradeAmount * 25;
-                case 5:
-                    if((!cannonUnlocked && upgradePoints >= 10)){
-                        cannonLevel++;
-                    } else if(cannonUnlocked){
-                        cannonLevel += upgradeAmount;
+                case 6:
+                    if((upgradePoints >= 10)){
+                        cannonUnlocked = true;
+                        upgradePoints -= 10;
+                        printSlow("Laser Cannon Unlocked!!");
                     }else {
                         printSlow("Not enough upgrade points.");
                     }
-                    case 6: 
-                        break;
+                    break;
                 default: 
                     printSlow("Please input a valid choice.");
 
             }
             upgradePoints -= upgradeAmount;
-            printSlow("Upgrade more?\n1. yes\nAny key: no");
-            repeat = input.nextInt() == 1;
+            if(upgradePoints > 0){
+                printSlow("Upgrade more?\n1. yes\nAny key: no");
+                repeat = input.nextInt() == 1;
+            } else {
+                repeat = false;
+            }
             
         }
     }
@@ -132,7 +144,8 @@ public class Main{
     //Main logic for the game. 
     public static void doWave(){
         printSlow("\nWave " + currentWaveNum + " is starting...");
-        weaponAmmo = 5;
+        playerHealth = maxHealth;
+        weaponAmmo = ammoCapacity;
         Enemy currentEnemy;
         for(int i = 0; i < enemyList.size(); i++){
             currentEnemy = enemyList.get(i);
@@ -146,7 +159,10 @@ public class Main{
                         currentEnemy.hurt(currentDamage);
                         break;
                     case 2:
-                        currentEnemy.hurt((cannonLevel * 5) + currentDamage);
+                        currentEnemy.hurt(15 + currentDamage);
+                        break;
+                    case 3:
+                        currentEnemy.hurt(30 + currentDamage);
                 }
                 if(currentEnemy.isAlive()){
                     printSlow(currentEnemy.getName() + " attacks you!");
@@ -159,6 +175,7 @@ public class Main{
                 break;
             }
             upgradePoints += currentEnemy.getPointDrops();
+            printSlow("Enemies left in this wave: " + ((enemyList.size()-1) - i));
         }
     }
 
@@ -178,8 +195,9 @@ public class Main{
         printSlow("\nWhat will you do?");
         printSlow("Weapon ammo available: " + weaponAmmo);
         printSlow("1. Punch");
-        if(cannonLevel > 0){
-            printSlow("2. Use your laser cannon.");
+        printSlow("2. Use your laser pistol");
+        if(cannonUnlocked){
+            printSlow("3. Use your laser cannon.");
         }
 
         int user = input.nextInt();
@@ -187,8 +205,13 @@ public class Main{
             case 1: 
                 return user;
             case 2:
-                if(weaponAmmo > 0 && cannonLevel > 0){
+                if(weaponAmmo > 0){
                     weaponAmmo--;
+                    return user;
+                }
+            case 3:
+                if(weaponAmmo > 0 && cannonUnlocked){
+                    weaponAmmo -= 5;
                     return user;
                 }
                 printSlow("Not enough ammo!");
@@ -211,7 +234,7 @@ public class Main{
         System.out.println();
         if(slow){
             try {
-                Thread.sleep(1000);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
