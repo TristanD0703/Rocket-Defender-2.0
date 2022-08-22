@@ -21,7 +21,7 @@ public class Enemy {
         switch(type){
             case 1:
                 enemyName = "Alien foot-soldier";
-                health = 20;
+                health = 15;
                 strength = 5;
                 pointDrops = 1;
                 evasiveness = 5;
@@ -73,7 +73,6 @@ public class Enemy {
 
     public void printInfo(){
         System.out.println("Enemy current Health: " + health);
-        System.out.println("Strength: " + strength);
     }
 
     public void hurt(int currentDamage){
